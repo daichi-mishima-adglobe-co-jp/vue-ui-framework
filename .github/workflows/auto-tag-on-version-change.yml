@@ -36,6 +36,7 @@ jobs:
             echo "changed=true" >> $GITHUB_OUTPUT
           else
             echo "changed=false" >> $GITHUB_OUTPUT
+          fi
 
       - name: Create Git tag
         if: steps.version_check.outputs.changed == 'true'
