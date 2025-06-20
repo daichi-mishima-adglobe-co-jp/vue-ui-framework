@@ -5,14 +5,18 @@ on:
     paths:
       - 'package.json'
 
+permissions:
+  contents: write  # ← ここが重要！
+
 jobs:
   tag-version:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # 過去のコミットにアクセスするため
+          fetch-depth: 0
 
       - name: Install jq
         run: sudo apt-get install jq
