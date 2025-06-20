@@ -1,0 +1,48 @@
+name: Tag on Version Change
+
+on:
+  push:
+    paths:
+      - 'package.json'
+
+jobs:
+  tag-version:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # 過去のコミットにアクセスするため
+
+      - name: Install jq
+        run: sudo apt-get install jq
+
+      - name: Get previous version
+        id: prev
+        run: |
+          git fetch origin ${{ github.event.before }} --depth=1
+          git show ${{ github.event.before }}:package.json > old_package.json
+          echo "OLD_VERSION=$(jq -r .version old_package.json)" >> $GITHUB_OUTPUT
+
+      - name: Get current version
+        id: curr
+        run: |
+          echo "NEW_VERSION=$(jq -r .version package.json)" >> $GITHUB_OUTPUT
+
+      - name: Check if version changed
+        id: version_check
+        run: |
+          if [ "${{ steps.prev.outputs.OLD_VERSION }}" != "${{ steps.curr.outputs.NEW_VERSION }}" ]; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+
+      - name: Create Git tag
+        if: steps.version_check.outputs.changed == 'true'
+        run: |
+          TAG="v${{ steps.curr.outputs.NEW_VERSION }}"
+          echo "Creating tag $TAG"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag "$TAG"
+          git push origin "$TAG"
